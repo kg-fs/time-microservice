@@ -4,26 +4,21 @@ const cors = require('cors');
 const app = express();
 const PORT = 3002;
 
-// Clave de API real de WeatherAPI.com colocada directamente en el código
 const WEATHER_API_KEY = "918194e388c44b24ac5192041262106";
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Log requests
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
 
-// Helper function to generate mock timezone/time data
 function getMockTime(locationName) {
     const cleanName = locationName.trim();
     const cleanLower = cleanName.toLowerCase();
     const hash = Array.from(cleanName).reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
-    // Mapeo básico de zonas horarias reales para pruebas comunes
     const tzDatabase = {
         'nicaragua': { tz_id: 'America/Managua', offset: -6, country: 'Nicaragua' },
         'managua': { tz_id: 'America/Managua', offset: -6, country: 'Nicaragua' },
@@ -52,7 +47,6 @@ function getMockTime(locationName) {
 
     let tzInfo = tzDatabase[cleanLower];
     if (!tzInfo) {
-        // Si no está en el mapa común, genera un offset entre -11 y +12 de forma pseudo-aleatoria
         const offset = -11 + (hash % 24);
         const countryName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase();
         tzInfo = {
@@ -62,12 +56,10 @@ function getMockTime(locationName) {
         };
     }
 
-    // Calcula la hora local correspondiente a ese offset
     const nowUtc = new Date();
     const localTimeMs = nowUtc.getTime() + (tzInfo.offset * 60 * 60 * 1000);
     const localDate = new Date(localTimeMs);
 
-    // Formato exacto YYYY-MM-DD HH:mm que devuelve WeatherAPI
     const yyyy = localDate.getUTCFullYear();
     const mm = String(localDate.getUTCMonth() + 1).padStart(2, '0');
     const dd = String(localDate.getUTCDate()).padStart(2, '0');
@@ -84,7 +76,6 @@ function getMockTime(locationName) {
     };
 }
 
-// Function to fetch timezone and time from external API or fallback to mock
 async function fetchTime(location) {
     if (!WEATHER_API_KEY || WEATHER_API_KEY.trim() === "" || WEATHER_API_KEY === "TU_WEATHER_API_KEY_AQUI") {
         return getMockTime(location);
@@ -113,7 +104,6 @@ async function fetchTime(location) {
     }
 }
 
-// Health check endpoint
 app.get('/health', (req, res) => {
     res.json({
         status: "UP",
@@ -123,7 +113,6 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Time endpoint (Returns ONLY the time of the requested location)
 app.get('/api/time', async (req, res, next) => {
     try {
         const { country } = req.query;
@@ -144,7 +133,6 @@ app.get('/api/time', async (req, res, next) => {
     }
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
     console.error("Unhandled error:", err);
     res.status(500).json({
@@ -153,7 +141,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start Server
 app.listen(PORT, () => {
     console.log(`==================================================`);
     console.log(` Time Microservice started on port ${PORT}`);
